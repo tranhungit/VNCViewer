@@ -1,0 +1,143 @@
+Installing Oracle Database 21c in silent mode
+I’m working a lot with automation recently, I decided to write this small blog post to share the installation of Oracle database 21c on Oracle Unbreakable Linux 8.4 (this post will not cover the Linux installation, but this is a very straightforward installation and probably you won’t have any problem with OS installation).
+
+I assume you have access via ssh to the database server, with OEL8 running on it. In my case, a small VM running using VirtualBox on my MacBook. My machine is called oel8 and I will demonstrate the installation via text mode only, in this post.
+
+Install the Oracle OS Pre-Install package, as root user:
+dnf install oracle-database-preinstall-21c -y 
+Obs.: If you are not using OEL, you can enable the public yum repo on it.
+
+2. Define oracle password, as root user:
+
+passwd oracle
+3. Create OS folders and make oracle user owner of them, as root user:
+
+mkdir -p /u01/app/oracle/product/21c/db1
+mkdir -p /u01/app/oraInventory
+chown -R oracle.oinstall /u01
+chmod -R 775 /u01
+4. Add these environment variables in /home/oracle/.bash_profile, as oracle user:
+
+export ORACLE_BASE=/u01/app/oracle
+export ORACLE_HOME=${ORACLE_BASE}/product/21c/db1
+export ORACLE_HOSTNAME=oel8
+export PATH=${ORACLE_HOME}/bin:${ORACLE_HOME}/OPatch:${PATH}
+export LD_LIBRARY_PATH=${ORACLE_HOME}/lib:/lib:/usr/lib
+export CLASSPATH=${ORACLE_HOME}/jlib:${ORACLE_HOME}/rdbms/jlib
+export ORACLE_SID=prd
+5. Copy the installation zip file to the OH directory, as oracle user:
+
+cp V1011496-01.zip /u01/app/oracle/product/21c/db1/
+6. Unzip the V1011496-01.zip file there, as oracle user:
+
+cd /u01/app/oracle/product/21c/db1
+unzip -qa V1011496-01.zip
+7. Make a copy of the original file to your OH to play with it, as oracle user:
+
+cp ${ORACLE_HOME}/install/response/db_install.rsp ${ORACLE_HOME}/
+8. Let’s use the command grep to remove commented and empty lines from it
+
+[oracle@oel8 db1]$ grep -v -e '^$\|#' db_install.rsp
+oracle.install.responseFileVersion=/oracle/install/rspfmt_dbinstall_response_schema_v21.0.0
+oracle.install.option=
+UNIX_GROUP_NAME=
+INVENTORY_LOCATION=
+ORACLE_HOME=
+ORACLE_BASE=
+oracle.install.db.InstallEdition=
+oracle.install.db.OSDBA_GROUP=
+oracle.install.db.OSOPER_GROUP=
+oracle.install.db.OSBACKUPDBA_GROUP=
+oracle.install.db.OSDGDBA_GROUP=
+oracle.install.db.OSKMDBA_GROUP=
+oracle.install.db.OSRACDBA_GROUP=
+oracle.install.db.rootconfig.executeRootScript=
+oracle.install.db.rootconfig.configMethod=
+oracle.install.db.rootconfig.sudoPath=
+oracle.install.db.rootconfig.sudoUserName=
+oracle.install.db.CLUSTER_NODES=
+oracle.install.db.config.starterdb.type=
+oracle.install.db.config.starterdb.globalDBName=
+oracle.install.db.config.starterdb.SID=
+oracle.install.db.config.PDBName=
+oracle.install.db.config.starterdb.characterSet=
+oracle.install.db.config.starterdb.memoryOption=
+oracle.install.db.config.starterdb.memoryLimit=
+oracle.install.db.config.starterdb.password.ALL=
+oracle.install.db.config.starterdb.password.SYS=
+oracle.install.db.config.starterdb.password.SYSTEM=
+oracle.install.db.config.starterdb.password.DBSNMP=
+oracle.install.db.config.starterdb.password.PDBADMIN=
+oracle.install.db.config.starterdb.managementOption=
+oracle.install.db.config.starterdb.omsHost=
+oracle.install.db.config.starterdb.omsPort=
+oracle.install.db.config.starterdb.emAdminUser=
+oracle.install.db.config.starterdb.emAdminPassword=
+oracle.install.db.config.starterdb.enableRecovery=
+oracle.install.db.config.starterdb.storageType=
+oracle.install.db.config.starterdb.fileSystemStorage.dataLocation=
+oracle.install.db.config.starterdb.fileSystemStorage.recoveryLocation=
+oracle.install.db.config.asm.diskGroup=
+oracle.install.db.config.asm.ASMSNMPPassword=
+Obs.: This file has a lot of properties on it, as it’s just a test environment, I will stop at this property “oracle.install.db.OSRACDBA_GROUP”
+
+9. Let’s create our own response file mydbinstall.rsp, using this cat method (this is very handy when we play with variables)
+
+cat << EOF > mydbinstall.rsp 
+oracle.install.responseFileVersion=/oracle/install/rspfmt_dbinstall_response_schema_v21.0.0
+oracle.install.option=INSTALL_DB_SWONLY
+UNIX_GROUP_NAME=oinstall
+INVENTORY_LOCATION=/u01/app/oraInventory
+ORACLE_HOME=/u01/app/oracle/product/21c/db1
+ORACLE_BASE=/u01/app/oracle/
+oracle.install.db.InstallEdition=EE
+oracle.install.db.OSDBA_GROUP=oinstall
+oracle.install.db.OSOPER_GROUP=oinstall
+oracle.install.db.OSBACKUPDBA_GROUP=oinstall
+oracle.install.db.OSDGDBA_GROUP=oinstall
+oracle.install.db.OSKMDBA_GROUP=oinstall
+oracle.install.db.OSRACDBA_GROUP=oinstall
+EOF
+10. Run the runInstaller script, as oracle user:
+
+cd ${ORACLE_HOME} 
+./runInstaller -silent -responseFile /u01/app/oracle/product/21c/db1/mydbinstall.rsp -ignorePrereq -waitforcompletion 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< --- This was the output --- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+[oracle@oel8 db1]$ cd ${ORACLE_HOME} 
+[oracle@oel8 db1]$ ./runInstaller -silent -responseFile /u01/app/oracle/product/21c/db1/mydbinstall.rsp -ignorePrereq -waitforcompletion 
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+	LANGUAGE = (unset),
+	LC_ALL = (unset),
+	LC_CTYPE = "UTF-8",
+	LANG = "en_US.UTF-8"
+    are supported and installed on your system.
+perl: warning: Falling back to a fallback locale ("en_US.UTF-8").
+Launching Oracle Database Setup Wizard...
+You can find the log of this install session at:
+ /tmp/InstallActions2021-09-08_09-32-07AM/installActions2021-09-08_09-32-07AM.log
+As a root user, execute the following script(s):
+	1. /u01/app/oraInventory/orainstRoot.sh
+	2. /u01/app/oracle/product/21c/db1/root.sh
+Execute /u01/app/oraInventory/orainstRoot.sh on the following nodes: 
+[oel8]
+Execute /u01/app/oracle/product/21c/db1/root.sh on the following nodes: 
+[oel8]
+Successfully Setup Software.
+Moved the install session logs to:
+ /u01/app/oraInventory/logs/InstallActions2021-09-08_09-32-07AM
+11. Execute the following scripts, as root user:
+
+[root@oel8 ~]# /u01/app/oraInventory/orainstRoot.sh
+Changing permissions of /u01/app/oraInventory.
+Adding read,write permissions for group.
+Removing read,write,execute permissions for world.
+Changing groupname of /u01/app/oraInventory to oinstall.
+The execution of the script is complete.
+[root@oel8 ~]# /u01/app/oracle/product/21c/db1/root.sh
+Check /u01/app/oracle/product/21c/db1/install/root_oel8.mufalani.lu_2021-09-08_09-35-28-753153111.log for the output of root script
+12. Checking Oracle version installed
+
+[oracle@oel8 ~]$ sqlplus -version
+SQL*Plus: Release 21.0.0.0.0 - Production
+Version 21.3.0.0.0
