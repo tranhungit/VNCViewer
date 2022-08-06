@@ -1,1 +1,23 @@
 /u01/fmw/product/bip12c/user_projects/domains/obi
+
+
+
+
+export ORACLE_HOME=/data/obiee11g/Oracle_BI1
+export PATH=$ORACLE_HOME/bin:$PATH
+export JAVA_HOME=$ORACLE_HOME/jdk
+export PATH=$JAVA_HOME/bin:$PATH
+export PATH=$ORACLE_HOME/OPatch:$PATH
+
+export FMW_HOME=/data/obiee11g
+cd $FMW_HOME/Oracle_BI1
+export ORACLE_HOME=$PWD
+export PATH=$ORACLE_HOME/bin:$PATH
+export JAVA_HOME=$ORACLE_HOME/jdk
+export PATH=$JAVA_HOME/bin:$PATH
+export PATH=$ORACLE_HOME/OPatch:$PATH
+
+######check opatch apply
+opatch lsinventory -jre $ORACLE_HOME/jdk/jre
+ 
+opatch apply -jre $ORACLE_HOME/jdk/jre
